@@ -267,12 +267,15 @@ public class InitUtils {
                         if(datePair.getValue().equals(excelColumnName)) {
                             quarter = numberFormat.format(sheet.getRow(row).getCell(rol).getNumericCellValue());
                         }
-                        sheet.getRow(row).getCell(rol).setCellType(CellType.STRING);
                         Cell cell =sheet.getRow(row).getCell(rol);
-                        if (CommonUtils.nullCellCheck(cell)) {
-                            temp = "null";
+                        if(cell.getCellType() == CellType.STRING) {
+                            if (CommonUtils.nullCellCheck(cell)) {
+                                temp = "null";
+                            } else {
+                                temp = sheet.getRow(row).getCell(rol).getStringCellValue();
+                            }
                         } else {
-                            temp = sheet.getRow(row).getCell(rol).getStringCellValue();
+                            temp = String.valueOf(sheet.getRow(row).getCell(rol).getNumericCellValue());
                         }
                     } else {
                         temp = "null";
@@ -297,6 +300,7 @@ public class InitUtils {
                             sb.append(" ").append(sqlColumnName).append(" = ").append(value).append(",");
                         } else {
                             if (pair.getValue() == 1) {
+                                value = value.trim();
                                 if(isNumeric(value)) {
                                     sb.append(" ").append(sqlColumnName).append(" = ").append(value).append(",");
                                 } else {
@@ -420,8 +424,10 @@ public class InitUtils {
     }
 
     public static boolean isNumeric(String str){
-        Pattern pattern = Pattern.compile("[0-9]*\\.?[0-9]+");
+        Pattern pattern = Pattern.compile("^[+-]?\\d+\\.?\\d*[Ee][+-]?\\d+$");
+        Pattern pattern1 = Pattern.compile("^[+-]?(\\d+|\\d+\\.\\d+)$");
         Matcher isNum = pattern.matcher(str);
-        return isNum.matches();
+        Matcher isNum1 = pattern1.matcher(str);
+        return (isNum.matches() ||  isNum1.matches()) ;
     }
 }
