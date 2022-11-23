@@ -209,7 +209,6 @@ public class WarehouseDynamicInsert {
 
             sb.append(" date_year = '").append(geoTempR).append("',")
                     .append(" date_quarter = ").append(geoTempL).append(",")
-                    .append(" create_time = '").append(new Timestamp(System.currentTimeMillis())).append("',")
                     .append(" valuation_quarter = '").append(geoTempR).append("Q").append(geoTempL).append("';\n");
             sb.append("update `t_warehouse_dynamic` w " +
                     "left join `t_warehouse_static_present` wsp " +

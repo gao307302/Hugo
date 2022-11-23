@@ -22,7 +22,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class InitUtils {
-
     /**
      * 数据库字段类型
      *
@@ -104,24 +103,20 @@ public class InitUtils {
         }
     }
 
-
     /**
      * 生成sql语句
-     *
+     * @param filePos
+     * @param extraSql
+     * @param manipulateType 0 insert 1 update 2 delete
+     * @return
      */
-    public List<String> getInitSqlList(FilePos filePos, ExtraSql extraSql, int type) {
+    public List<String> getInitSqlList(FilePos filePos, ExtraSql extraSql, int manipulateType, int districtType, int dataType) {
         String fileName = filePos.updatedFile;
         String tableName = filePos.tableName;
         Pair<String, String> datePair = filePos.datePair;
-        Integer sheetNum = null;
-        Integer rowNum = null;
-        if(type == 0) {
-            rowNum = filePos.rowNumInsert;
-            sheetNum = filePos.sheetNumInsert;
-        } else if(type == 1) {
-            rowNum = filePos.rowNumUpdate;
-            sheetNum = filePos.sheetNumUpdate;
-        }
+        Pair<String, String> geoPair = filePos.geoPair;
+        int sheetNum = filePos.sheetNum;
+        int rowNum = 1;
         HashMap<String, Pair<String, Integer>> excelSqlMap = InitUtils.getSqlColumnType(filePos.sqlColumnName);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         NumberFormat numberFormat = NumberFormat.getInstance();
@@ -149,66 +144,188 @@ public class InitUtils {
         // 第一行是表头
         for (int row = rowNum; row <= maxRow; row++) {
             StringBuilder sb = new StringBuilder();
-            if(type == 0) {
+            StringBuilder sb2 = new StringBuilder();
+            if(manipulateType == 0) {
                 sb.append("insert into `").append(tableName).append("` set");
-            } else if(type == 1) {
+            } else if(manipulateType == 1) {
                 sb.append("update `").append(tableName).append("` set");
-            }
-            //获取最后单元格num，即总单元格数 ***注意：此处从1开始计数***
-            maxRol = sheet.getRow(row).getLastCellNum();
-            //年 季度
-            String quarter = null;
-            String year = null;
-            for (int rol = 0; rol < maxRol; rol++) {
-                String excelColumnName = columnName.get(rol);
-                String value;
-                String temp;
-                if (sheet.getRow(row).getCell(rol) != null) {
-                    if(datePair.getKey().equals(excelColumnName)) {
-                        year = numberFormat.format(sheet.getRow(row).getCell(rol).getNumericCellValue());
-                        continue;
-                    } else if(datePair.getValue().equals(excelColumnName)) {
-                        quarter = numberFormat.format(sheet.getRow(row).getCell(rol).getNumericCellValue());
-                        continue;
-                    }
-                    sheet.getRow(row).getCell(rol).setCellType(CellType.STRING);
-                    Cell cell =sheet.getRow(row).getCell(rol);
-                    if (CommonUtils.nullCellCheck(cell)) {
-                        temp = "null";
-                    } else {
-                        temp = sheet.getRow(row).getCell(rol).getStringCellValue();
-                    }
-                } else {
-                    temp = "null";
+            } else {
+                sb.append("delete from `").append(tableName).append("` where");
+                if(dataType == 4) {
+                    sb2.append("delete from `t_warehouse_static_present` where");
                 }
-                value = temp;
+            }
 
-                Pair<String, Integer> pair = excelSqlMap.get(excelColumnName);
-                if (pair != null && pair.getKey() != null) {
-                    String sqlColumnName = pair.getKey();
-                    if (value.equals("null")) {
-                        sb.append(" ").append(sqlColumnName).append(" = ").append(value).append(",");
+            if(manipulateType == 2) {
+
+                for (int rol = 0; rol < maxRol; rol++) {
+
+                    String excelColumnName = columnName.get(rol);
+                    String value;
+                    String temp;
+                    if (sheet.getRow(row).getCell(rol) != null) {
+                        sheet.getRow(row).getCell(rol).setCellType(CellType.STRING);
+                        Cell cell =sheet.getRow(row).getCell(rol);
+                        if (CommonUtils.nullCellCheck(cell)) {
+                            temp = "null";
+                        } else {
+                            temp = sheet.getRow(row).getCell(rol).getStringCellValue();
+                        }
                     } else {
-                        if (pair.getValue() == 1) {
-                            sb.append(" ").append(sqlColumnName).append(" = ").append(value).append(",");
-                        } else if (pair.getValue() == 0) {
-                            sb.append(" ").append(sqlColumnName).append(" = '").append(value).append("',");
-                        } else if (pair.getValue() == 2) {
-                            Date date = DateUtil.getJavaDate(Double.parseDouble(value));
-                            sb.append(" ").append(sqlColumnName).append(" = '").append(sdf.format(date)).append("',");
+                        temp = "null";
+                    }
+
+                    if(filePos.typeMap.containsKey(excelColumnName) && !temp.equals("null")) {
+                        if(filePos.typeMap.get(excelColumnName).get(temp) == null) {
+                            System.out.println(row + "行" );
+                            System.out.println(rol + "列");
+                            System.out.println("字段名" + excelColumnName);
+                            System.out.println("字段值" + temp);
+                        }
+                        value = filePos.typeMap.get(excelColumnName).get(temp).toString();
+                    } else {
+                        value = temp;
+                    }
+
+                    Pair<String, Integer> pair = excelSqlMap.get(excelColumnName);
+                    if (pair != null && pair.getKey() != null) {
+                        String sqlColumnName = pair.getKey();
+                        if (value.equals("null")) {
+                            sb.append(" ").append(sqlColumnName).append(" = ").append(value).append(" and");
+                            if(dataType == 4) {
+                                sb2.append(" ").append(sqlColumnName).append(" = ").append(value).append(" and");
+                            }
+                        } else {
+                            if (pair.getValue() == 1) {
+                                sb.append(" ").append(sqlColumnName).append(" = ").append(value).append(" and");
+                                if(dataType == 4) {
+                                    sb2.append(" ").append(sqlColumnName).append(" = ").append(value).append(" and");
+                                }
+                            } else if (pair.getValue() == 0) {
+                                sb.append(" ").append(sqlColumnName).append(" = '").append(value).append("' and");
+                                if(dataType == 4) {
+                                    sb2.append(" ").append(sqlColumnName).append(" = ").append(value).append(" and");
+                                }
+                            } else if (pair.getValue() == 2) {
+                                Date date = DateUtil.getJavaDate(Double.parseDouble(value));
+                                sb.append(" ").append(sqlColumnName).append(" = '").append(sdf.format(date)).append("' and");
+                                if(dataType == 4) {
+                                    sb2.append(" ").append(sqlColumnName).append(" = '").append(sdf.format(date)).append(" and");
+                                }
+                            }
                         }
                     }
                 }
-            }
-            String cityName = sheet.getRow(row).getCell(2).getStringCellValue();
-            String districtName = sheet.getRow(row).getCell(4).getStringCellValue();
-            if(type == 0) {
-                extraSql.extrasolar(sb, quarter, year);
-            } else if (type == 1) {
                 sb.deleteCharAt(sb.length() - 1);
-                extraSql.updateMarket(sb, quarter, year, cityName, districtName);
+                sb.deleteCharAt(sb.length() - 1);
+                sb.deleteCharAt(sb.length() - 1);
+                sb.append(";");
+                if(dataType == 4) {
+                    sb2.deleteCharAt(sb.length() - 1);
+                    sb2.deleteCharAt(sb.length() - 1);
+                    sb2.deleteCharAt(sb.length() - 1);
+                    sb2.append(";");
+                }
+            } else {
+                //年 季度
+                String quarter = null;
+                String year = null;
+                //经纬度
+                String geoTempL = null;
+                String geoTempR = null;
+                //城区名
+                String cityName = null;
+                String districtName = null;
+                // vas id
+                String vasId = null;
+                for (int rol = 0; rol < maxRol; rol++) {
+                    String excelColumnName = columnName.get(rol);
+                    String value;
+                    String temp;
+                    if (sheet.getRow(row).getCell(rol) != null) {
+                        if(geoPair != null) {
+                            if(geoPair.getKey().equals(excelColumnName)) {
+                                geoTempL = numberFormat.format(sheet.getRow(row).getCell(rol).getNumericCellValue());
+                                continue;
+                            } else if(geoPair.getValue().equals(excelColumnName)) {
+                                geoTempR = numberFormat.format(sheet.getRow(row).getCell(rol).getNumericCellValue());
+                                continue;
+                            }
+                        }
+                        if(excelColumnName.equals("臻量ID") || excelColumnName.equals("臻量ID(新版)")) {
+                            vasId = sheet.getRow(row).getCell(rol).getStringCellValue();
+                        }
+                        if(excelColumnName.equals("城市")) {
+                            cityName = sheet.getRow(row).getCell(rol).getStringCellValue();
+                        }
+                        if(excelColumnName.equals("行政区")) {
+                            districtName = sheet.getRow(row).getCell(rol).getStringCellValue();
+                        }
+                        if(datePair.getKey().equals(excelColumnName)) {
+                            year = numberFormat.format(sheet.getRow(row).getCell(rol).getNumericCellValue());
+                        }
+                        if(datePair.getValue().equals(excelColumnName)) {
+                            quarter = numberFormat.format(sheet.getRow(row).getCell(rol).getNumericCellValue());
+                        }
+                        sheet.getRow(row).getCell(rol).setCellType(CellType.STRING);
+                        Cell cell =sheet.getRow(row).getCell(rol);
+                        if (CommonUtils.nullCellCheck(cell)) {
+                            temp = "null";
+                        } else {
+                            temp = sheet.getRow(row).getCell(rol).getStringCellValue();
+                        }
+                    } else {
+                        temp = "null";
+                    }
+
+                    if(filePos.typeMap.containsKey(excelColumnName) && !temp.equals("null")) {
+                        if(filePos.typeMap.get(excelColumnName).get(temp) == null) {
+                            System.out.println(row + "行" );
+                            System.out.println(rol + "列");
+                            System.out.println("字段名" + excelColumnName);
+                            System.out.println("字段值" + temp);
+                        }
+                        value = filePos.typeMap.get(excelColumnName).get(temp).toString();
+                    } else {
+                        value = temp;
+                    }
+
+                    Pair<String, Integer> pair = excelSqlMap.get(excelColumnName);
+                    if (pair != null && pair.getKey() != null) {
+                        String sqlColumnName = pair.getKey();
+                        if (value.equals("null")) {
+                            sb.append(" ").append(sqlColumnName).append(" = ").append(value).append(",");
+                        } else {
+                            if (pair.getValue() == 1) {
+                                if(isNumeric(value)) {
+                                    sb.append(" ").append(sqlColumnName).append(" = ").append(value).append(",");
+                                } else {
+                                    System.out.println(row + "行" );
+                                    System.out.println(rol + "列");
+                                    System.out.println("字段名" + excelColumnName);
+                                    System.out.println("字段值" + value);
+                                }
+                            } else if (pair.getValue() == 0) {
+                                sb.append(" ").append(sqlColumnName).append(" = '").append(value).append("',");
+                            } else if (pair.getValue() == 2) {
+                                Date date = DateUtil.getJavaDate(Double.parseDouble(value));
+                                sb.append(" ").append(sqlColumnName).append(" = '").append(sdf.format(date)).append("',");
+                            }
+                        }
+                    }
+                }
+                if(manipulateType == 0) {
+                    extraSql.insert(sb, quarter, year, geoTempL, geoTempR, vasId, districtType);
+                } else if (manipulateType == 1) {
+                    sb.deleteCharAt(sb.length() - 1);
+                    extraSql.update(sb, quarter, year, geoTempL, geoTempR, vasId, districtType, cityName, districtName);
+                }
             }
+
             sqlList.add(sb.toString());
+            if(dataType == 4 && manipulateType == 2) {
+                sqlList.add(sb2.toString());
+            }
         }
         return sqlList;
     }
@@ -249,7 +366,7 @@ public class InitUtils {
             StringBuilder sb = new StringBuilder();
             sb.append("delete from `").append(tableName).append("`")
                     .append(" where city_code = ").append(sheet.getRow(row).getCell(3).getStringCellValue())
-                    .append(" where data_type =").append(filePos.dataType)
+                    .append(" and data_type =").append(filePos.dataType)
                     .append(" and date_year = '").append(numberFormat.format(sheet.getRow(row).getCell(5).getNumericCellValue())).append("'")
                     .append(" and date_quarter = ").append(numberFormat.format(sheet.getRow(row).getCell(6).getNumericCellValue()))
                     .append(";\n");
@@ -293,12 +410,18 @@ public class InitUtils {
             StringBuilder sb = new StringBuilder();
             sb.append("delete from `").append(tableName).append("`")
                     .append(" where district_code = ").append(sheet.getRow(row).getCell(5).getStringCellValue())
-                    .append(" where data_type =").append(filePos.dataType)
+                    .append(" and data_type =").append(filePos.dataType)
                     .append(" and date_year = '").append(numberFormat.format(sheet.getRow(row).getCell(5).getNumericCellValue())).append("'")
                     .append(" and date_quarter = ").append(numberFormat.format(sheet.getRow(row).getCell(6).getNumericCellValue()))
                     .append(";\n");
             sqlList.add(sb.toString());
         }
         return sqlList;
+    }
+
+    public static boolean isNumeric(String str){
+        Pattern pattern = Pattern.compile("[0-9]*\\.?[0-9]+");
+        Matcher isNum = pattern.matcher(str);
+        return isNum.matches();
     }
 }

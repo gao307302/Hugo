@@ -437,8 +437,10 @@ public class WarehouseStaticUpdate {
 
 
     public static void main(String[] args) {
-        String excelSourceFile = args[0].toString();
-        String exportFolder = args[1].toString();
+//        String excelSourceFile = args[0].toString();
+//        String exportFolder = args[1].toString();
+        String excelSourceFile = "数据更新_昆太常张城市行政区修改-1122.xlsx";
+        String exportFolder = "221122\\";
         FilePos filePos = new FilePos(excelSourceFile, exportFolder);
         System.out.println(filePos.excelSourceFile);
         System.out.println(filePos.exportFolder);

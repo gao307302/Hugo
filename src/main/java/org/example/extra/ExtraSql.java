@@ -1,6 +1,12 @@
 package org.example.extra;
 
 public interface ExtraSql {
-    void extrasolar(StringBuilder sb, String quarter, String year);
-    void updateMarket(StringBuilder sb, String quarter, String year, String cityName, String districtName);
+    void insert(StringBuilder sb, String quarter, String year, String geoTempL, String geoTempR, String vasId, int districtType);
+    void update(StringBuilder sb, String quarter, String year, String geoTempL, String geoTempR, String vasId, int districtType, String cityName, String districtName);
+
+    // 最后额外sql
+    String insertEnding(StringBuilder sb);
+    String updateEnding(StringBuilder sb);
+    String ending(StringBuilder sb);
+
 }

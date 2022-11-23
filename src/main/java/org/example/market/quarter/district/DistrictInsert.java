@@ -33,6 +33,7 @@ public class DistrictInsert {
      * @return
      */
     static List<String> getSqlList(String fileName, HashMap<String, Pair<String, Integer>> excelSqlMap) {
+        FilePosQuarterDistrict filePosQuarterDistrict = new FilePosQuarterDistrict();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         NumberFormat numberFormat = NumberFormat.getInstance();
         // 不显示千位分割符，否则显示结果会变成类似1,234,567,890
@@ -46,7 +47,7 @@ public class DistrictInsert {
         }
         // TODO
 
-        XSSFSheet sheet = xssfWorkbook.getSheetAt(FilePosQuarterCity.sheetNumInsert);
+        XSSFSheet sheet = xssfWorkbook.getSheetAt(filePosQuarterDistrict.sheetNumInsert);
         int maxRow = sheet.getLastRowNum();
         int maxRol = sheet.getRow(0).getLastCellNum();
         //获取表头
@@ -57,7 +58,7 @@ public class DistrictInsert {
 
         List<String> sqlList = new ArrayList<>();
         // 第一行是表头
-        for (int row = FilePosQuarterCity.rowNumInsert; row <= maxRow; row++) {
+        for (int row = filePosQuarterDistrict.rowNumInsert; row <= maxRow; row++) {
             StringBuilder sb = new StringBuilder();
             sb.append("insert into `").append(tableName).append("` set");
             //获取最后单元格num，即总单元格数 ***注意：此处从1开始计数***
@@ -119,14 +120,15 @@ public class DistrictInsert {
     }
     // 额外sql
     private static String getString(StringBuilder sb) {
+        FilePosQuarterDistrict filePosQuarterDistrict = new FilePosQuarterDistrict();
         String extra;
         sb.append("UPDATE ").append(tableName)
                 .append(" SET date_order = 0 WHERE date_order = 2;\n");
         sb.append("UPDATE ").append(tableName)
                 .append(" SET date_order = 2 WHERE date_order = 1;\n");
         sb.append("UPDATE ").append(tableName)
-                .append(" w SET w.date_order = 1 WHERE w.date_year = '").append(FilePosQuarterCity.year).append("'")
-                .append(" and w.date_quarter = ").append(FilePosQuarterCity.quarter)
+                .append(" w SET w.date_order = 1 WHERE w.date_year = '").append(filePosQuarterDistrict.year).append("'")
+                .append(" and w.date_quarter = ").append(filePosQuarterDistrict.quarter)
                 .append(";\n");
         sb.append("UPDATE `").append(tableName).append("` w " +
                 "left join `b_location_business` b " +
@@ -139,18 +141,19 @@ public class DistrictInsert {
 
 
     public static void main(String[] args) {
-        HashMap<String, Pair<String, Integer>> sqlColumnTypeMap = InitUtils.getSqlColumnType(FilePosQuarterCity.sqlColumnName);
-        List<String> list = getSqlList(FilePosQuarterCity.updatedFile, sqlColumnTypeMap);
+        FilePosQuarterDistrict filePosQuarterDistrict = new FilePosQuarterDistrict();
+        HashMap<String, Pair<String, Integer>> sqlColumnTypeMap = InitUtils.getSqlColumnType(filePosQuarterDistrict.sqlColumnName);
+        List<String> list = getSqlList(filePosQuarterDistrict.updatedFile, sqlColumnTypeMap);
         System.out.println(list.size());
         for (String s :
                 list) {
-            InitUtils.saveAsFileWriter(s, FilePosQuarterCity.outputFileInsert);
+            InitUtils.saveAsFileWriter(s, filePosQuarterDistrict.outputFileInsert);
         }
-        if(FilePosQuarterCity.newQuarter) {
+        if(filePosQuarterDistrict.newQuarter) {
             String extra;
             StringBuilder sb = new StringBuilder();
             extra = getString(sb);
-            InitUtils.saveAsFileWriter(extra, FilePosQuarterCity.outputFileInsert);
+            InitUtils.saveAsFileWriter(extra, filePosQuarterDistrict.outputFileInsert);
         }
     }
 

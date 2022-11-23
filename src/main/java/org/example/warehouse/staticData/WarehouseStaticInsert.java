@@ -371,8 +371,6 @@ public class WarehouseStaticInsert {
             sb.append("UPDATE `t_warehouse_static_present` SET vid = UUID()" +
                     " where vas_id = '").append(sheet.getRow(row).getCell(0).getStringCellValue()).append("'")
                     .append(";\n");
-            // TODO
-            // 省份 cluster
             sqlList.add(sb.toString());
         }
         return sqlList;
