@@ -22,7 +22,7 @@ public class ExtraSqlStatic implements ExtraSql {
     @Override
     public void update(StringBuilder sb, String quarter, String year, String geoTempL, String geoTempR, String vasId, int districtType, String cityName, String districtName) {
 
-        sb.append(" x_y = ST_GEOMFROMTEXT('Point(").append(geoTempL).append(" ").append(geoTempR).append(")', 4326)");
+        sb.append(", x_y = ST_GEOMFROMTEXT('Point(").append(geoTempL).append(" ").append(geoTempR).append(")', 4326)");
         sb.append(" where vas_id = '").append(vasId).append("'").append(";\n");
         sb.append("update `t_warehouse_static_present` o, `t_warehouse_static` n " +
                 "set " +
@@ -79,17 +79,17 @@ public class ExtraSqlStatic implements ExtraSql {
                 "left join `b_location` b " +
                 "on w.city_code = b.adcode " +
                 "and b.location_type = 2 " +
-                "set w.province_code = b.parent_adcode ");
+                "set w.province_code = b.parent_adcode;\n");
         sb.append("update `t_warehouse_static` w " +
                 "left join `b_location` b " +
                 "on w.province_code = b.adcode " +
                 "and b.location_type = 1 " +
-                "set w.province_name = b.name ");
+                "set w.province_name = b.name;\n");
         sb.append("update `t_warehouse_static` w " +
                 "left join `b_location_business` b " +
                 "on b.adcode = w.city_code " +
-                "set w.city_cluster_id = b.city_cluster_id ");
-        return null;
+                "set w.city_cluster_id = b.city_cluster_id;\n");
+        return sb.toString();
     }
 
     @Override
@@ -98,50 +98,22 @@ public class ExtraSqlStatic implements ExtraSql {
                 "left join `b_location` b " +
                 "on w.city_code = b.adcode " +
                 "and b.location_type = 2 " +
-                "set w.province_code = b.parent_adcode ");
+                "set w.province_code = b.parent_adcode;\n");
         sb.append("update `t_warehouse_static` w " +
                 "left join `b_location` b " +
                 "on w.province_code = b.adcode " +
                 "and b.location_type = 1 " +
-                "set w.province_name = b.name ");
+                "set w.province_name = b.name;\n");
         sb.append("update `t_warehouse_static` w " +
                 "left join `b_location_business` b " +
                 "on b.adcode = w.city_code " +
-                "set w.city_cluster_id = b.city_cluster_id ");
-        return null;
+                "set w.city_cluster_id = b.city_cluster_id;\n");
+        return sb.toString();
     }
 
     @Override
     public String ending(StringBuilder sb) {
-        sb.append("update `t_warehouse_static` w " +
-                "left join `b_location` b " +
-                "on w.city_code = b.adcode " +
-                "and b.location_type = 2 " +
-                "set w.province_code = b.parent_adcode ");
-        sb.append("update `t_warehouse_static` w " +
-                "left join `b_location` b " +
-                "on w.province_code = b.adcode " +
-                "and b.location_type = 1 " +
-                "set w.province_name = b.name ");
-        sb.append("update `t_warehouse_static` w " +
-                "left join `b_location_business` b " +
-                "on b.adcode = w.city_code " +
-                "set w.city_cluster_id = b.city_cluster_id ");
-        sb.append("update `t_warehouse_static_present` w " +
-                "left join `b_location` b " +
-                "on w.city_code = b.adcode " +
-                "and b.location_type = 2 " +
-                "set w.province_code = b.parent_adcode ");
-        sb.append("update `t_warehouse_static_present` w " +
-                "left join `b_location` b " +
-                "on w.province_code = b.adcode " +
-                "and b.location_type = 1 " +
-                "set w.province_name = b.name ");
-        sb.append("update `t_warehouse_static_present` w " +
-                "left join `b_location_business` b " +
-                "on b.adcode = w.city_code " +
-                "set w.city_cluster_id = b.city_cluster_id ");
-        return null;
+        return "";
     }
 
 }

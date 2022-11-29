@@ -50,7 +50,7 @@ public class InitUtils {
             String excelNameString = sheet.getRow(row).getCell(2).getStringCellValue();
             // String 0 int 1
             int type = 1;
-            if (nameString.contains("valuation_date")) {
+            if (nameString.contains("valuation_date") || typeString.equals("date")) {
                 type = 2;
             } else if (typeString.contains("varchar")) {
                 type = 0;
@@ -61,7 +61,7 @@ public class InitUtils {
     }
 
     //提取数字
-    public static String getStringNumber(String str){
+    public String getStringNumber(String str) {
         // 控制正则表达式的匹配行为的参数(小数)
         Pattern p = Pattern.compile("(\\d+\\.\\d+)");
         //Matcher类的构造方法也是私有的,不能随意创建,只能通过Pattern.matcher(CharSequence input)方法得到该类的实例.
@@ -85,6 +85,7 @@ public class InitUtils {
         }
         return str;
     }
+
     public static void saveAsFileWriter(String content, String filePath) {
         FileWriter fwriter = null;
         try {
@@ -105,6 +106,7 @@ public class InitUtils {
 
     /**
      * 生成sql语句
+     *
      * @param filePos
      * @param extraSql
      * @param manipulateType 0 insert 1 update 2 delete
@@ -145,27 +147,31 @@ public class InitUtils {
         for (int row = rowNum; row <= maxRow; row++) {
             StringBuilder sb = new StringBuilder();
             StringBuilder sb2 = new StringBuilder();
-            if(manipulateType == 0) {
+            if (manipulateType == 0) {
                 sb.append("insert into `").append(tableName).append("` set");
-            } else if(manipulateType == 1) {
+            } else if (manipulateType == 1) {
                 sb.append("update `").append(tableName).append("` set");
             } else {
                 sb.append("delete from `").append(tableName).append("` where");
-                if(dataType == 4) {
+                if (dataType == 4) {
                     sb2.append("delete from `t_warehouse_static_present` where");
                 }
             }
 
-            if(manipulateType == 2) {
+            if (manipulateType == 2) {
 
                 for (int rol = 0; rol < maxRol; rol++) {
 
                     String excelColumnName = columnName.get(rol);
                     String value;
                     String temp;
+                    Pair<String, Integer> pair = excelSqlMap.get(excelColumnName);
+                    if (pair == null || pair.getKey() == null || pair.getKey().equals("")) {
+                        continue;
+                    }
                     if (sheet.getRow(row).getCell(rol) != null) {
                         sheet.getRow(row).getCell(rol).setCellType(CellType.STRING);
-                        Cell cell =sheet.getRow(row).getCell(rol);
+                        Cell cell = sheet.getRow(row).getCell(rol);
                         if (CommonUtils.nullCellCheck(cell)) {
                             temp = "null";
                         } else {
@@ -175,42 +181,44 @@ public class InitUtils {
                         temp = "null";
                     }
 
-                    if(filePos.typeMap.containsKey(excelColumnName) && !temp.equals("null")) {
-                        if(filePos.typeMap.get(excelColumnName).get(temp) == null) {
-                            System.out.println(row + "行" );
-                            System.out.println(rol + "列");
-                            System.out.println("字段名" + excelColumnName);
-                            System.out.println("字段值" + temp);
+                    if (filePos.typeMap.containsKey(excelColumnName) && !temp.equals("null")) {
+                        if (filePos.typeMap.get(excelColumnName).get(temp) == null) {
+                            System.out.println(row + " 行");
+                            System.out.println(rol + " 列");
+                            System.out.println("字段名:" + excelColumnName);
+                            System.out.println("字段值:" + temp);
                         }
                         value = filePos.typeMap.get(excelColumnName).get(temp).toString();
                     } else {
                         value = temp;
                     }
+                    if (value.equals("null")) {
+                        continue;
+                    }
 
-                    Pair<String, Integer> pair = excelSqlMap.get(excelColumnName);
-                    if (pair != null && pair.getKey() != null) {
+                    if (pair.getKey() != null && !pair.getKey().equals("")) {
                         String sqlColumnName = pair.getKey();
                         if (value.equals("null")) {
                             sb.append(" ").append(sqlColumnName).append(" = ").append(value).append(" and");
-                            if(dataType == 4) {
+                            if (dataType == 4) {
                                 sb2.append(" ").append(sqlColumnName).append(" = ").append(value).append(" and");
                             }
                         } else {
                             if (pair.getValue() == 1) {
                                 sb.append(" ").append(sqlColumnName).append(" = ").append(value).append(" and");
-                                if(dataType == 4) {
+                                if (dataType == 4) {
                                     sb2.append(" ").append(sqlColumnName).append(" = ").append(value).append(" and");
                                 }
                             } else if (pair.getValue() == 0) {
                                 sb.append(" ").append(sqlColumnName).append(" = '").append(value).append("' and");
-                                if(dataType == 4) {
-                                    sb2.append(" ").append(sqlColumnName).append(" = ").append(value).append(" and");
+                                if (dataType == 4) {
+                                    sb2.append(" ").append(sqlColumnName).append(" = '").append(value).append("' and");
                                 }
                             } else if (pair.getValue() == 2) {
                                 Date date = DateUtil.getJavaDate(Double.parseDouble(value));
                                 sb.append(" ").append(sqlColumnName).append(" = '").append(sdf.format(date)).append("' and");
-                                if(dataType == 4) {
-                                    sb2.append(" ").append(sqlColumnName).append(" = '").append(sdf.format(date)).append(" and");
+                                if (dataType == 4) {
+                                    sb2.append(" ").append(sqlColumnName).append(" = '").append(sdf.format(date)).append("' and");
                                 }
                             }
                         }
@@ -219,12 +227,12 @@ public class InitUtils {
                 sb.deleteCharAt(sb.length() - 1);
                 sb.deleteCharAt(sb.length() - 1);
                 sb.deleteCharAt(sb.length() - 1);
-                sb.append(";");
-                if(dataType == 4) {
-                    sb2.deleteCharAt(sb.length() - 1);
-                    sb2.deleteCharAt(sb.length() - 1);
-                    sb2.deleteCharAt(sb.length() - 1);
-                    sb2.append(";");
+                sb.append(";\n");
+                if (dataType == 4) {
+                    sb2.deleteCharAt(sb2.length() - 1);
+                    sb2.deleteCharAt(sb2.length() - 1);
+                    sb2.deleteCharAt(sb2.length() - 1);
+                    sb2.append(";\n");
                 }
             } else {
                 //年 季度
@@ -242,72 +250,94 @@ public class InitUtils {
                     String excelColumnName = columnName.get(rol);
                     String value;
                     String temp;
+                    Pair<String, Integer> pair = excelSqlMap.get(excelColumnName);
                     if (sheet.getRow(row).getCell(rol) != null) {
-                        if(geoPair != null) {
-                            if(geoPair.getKey().equals(excelColumnName)) {
-                                geoTempL = numberFormat.format(sheet.getRow(row).getCell(rol).getNumericCellValue());
+                        if (geoPair != null) {
+                            if (geoPair.getKey().equals(excelColumnName)) {
+                                geoTempR = String.valueOf(sheet.getRow(row).getCell(rol).getNumericCellValue());
                                 continue;
-                            } else if(geoPair.getValue().equals(excelColumnName)) {
-                                geoTempR = numberFormat.format(sheet.getRow(row).getCell(rol).getNumericCellValue());
+                            } else if (geoPair.getValue().equals(excelColumnName)) {
+                                geoTempL = String.valueOf(sheet.getRow(row).getCell(rol).getNumericCellValue());
                                 continue;
                             }
                         }
-                        if(excelColumnName.equals("臻量ID") || excelColumnName.equals("臻量ID(新版)")) {
+                        if (pair == null || pair.getKey() == null || pair.getKey().equals("")) {
+                            continue;
+                        }
+                        if (excelColumnName.equals("臻量ID") || excelColumnName.equals("臻量ID(新版)")) {
                             vasId = sheet.getRow(row).getCell(rol).getStringCellValue();
                         }
-                        if(excelColumnName.equals("城市")) {
+                        if (excelColumnName.equals("城市")) {
                             cityName = sheet.getRow(row).getCell(rol).getStringCellValue();
                         }
-                        if(excelColumnName.equals("行政区")) {
+                        if (excelColumnName.equals("行政区")) {
                             districtName = sheet.getRow(row).getCell(rol).getStringCellValue();
                         }
-                        if(datePair.getKey().equals(excelColumnName)) {
+                        if (datePair.getKey().equals(excelColumnName)) {
                             year = numberFormat.format(sheet.getRow(row).getCell(rol).getNumericCellValue());
                         }
-                        if(datePair.getValue().equals(excelColumnName)) {
+                        if (datePair.getValue().equals(excelColumnName)) {
                             quarter = numberFormat.format(sheet.getRow(row).getCell(rol).getNumericCellValue());
                         }
-                        Cell cell =sheet.getRow(row).getCell(rol);
-                        if(cell.getCellType() == CellType.STRING) {
-                            if (CommonUtils.nullCellCheck(cell)) {
-                                temp = "null";
+
+
+                        try {
+                            if (sheet.getRow(row).getCell(rol) != null) {
+                                if (sheet.getRow(row).getCell(rol).getCellType() == CellType.BLANK) {
+                                    temp = "null";
+                                } else {
+                                    sheet.getRow(row).getCell(rol).setCellType(CellType.STRING);
+                                }
+                                if (CommonUtils.nullCellCheck(sheet.getRow(row).getCell(rol))) {
+                                    temp = "null";
+                                } else {
+                                    temp = sheet.getRow(row).getCell(rol).getStringCellValue();
+                                }
                             } else {
-                                temp = sheet.getRow(row).getCell(rol).getStringCellValue();
+                                temp = "null";
                             }
-                        } else {
-                            temp = String.valueOf(sheet.getRow(row).getCell(rol).getNumericCellValue());
+                        } catch (Exception e) {
+                            System.out.println("第一步转换失败");
+                            System.out.println(row + " 行");
+                            System.out.println(rol + " 列");
+                            System.out.println("字段名:" + excelColumnName);
+                            throw e;
                         }
                     } else {
                         temp = "null";
                     }
 
-                    if(filePos.typeMap.containsKey(excelColumnName) && !temp.equals("null")) {
-                        if(filePos.typeMap.get(excelColumnName).get(temp) == null) {
-                            System.out.println(row + "行" );
-                            System.out.println(rol + "列");
-                            System.out.println("字段名" + excelColumnName);
-                            System.out.println("字段值" + temp);
+                    if (filePos.typeMap.containsKey(excelColumnName) && !temp.equals("null")) {
+                        if (filePos.typeMap.get(excelColumnName).get(temp) == null) {
+                            System.out.println(row + " 行");
+                            System.out.println(rol + " 列");
+                            System.out.println("字段名:" + excelColumnName);
+                            System.out.println("字段值:" + temp);
                         }
                         value = filePos.typeMap.get(excelColumnName).get(temp).toString();
+                    } else if (filePos.toNumList != null && filePos.toNumList.size() != 0 && filePos.toNumList.contains(excelColumnName)) {
+                        value = getStringNumber(temp);
+                        if (value.equals("")) {
+                            value = "null";
+                        }
                     } else {
                         value = temp;
                     }
 
-                    Pair<String, Integer> pair = excelSqlMap.get(excelColumnName);
-                    if (pair != null && pair.getKey() != null) {
+                    if (pair != null && pair.getKey() != null && pair.getKey() != "") {
                         String sqlColumnName = pair.getKey();
                         if (value.equals("null")) {
                             sb.append(" ").append(sqlColumnName).append(" = ").append(value).append(",");
                         } else {
                             if (pair.getValue() == 1) {
                                 value = value.trim();
-                                if(isNumeric(value)) {
+                                if (isNumeric(value)) {
                                     sb.append(" ").append(sqlColumnName).append(" = ").append(value).append(",");
                                 } else {
-                                    System.out.println(row + "行" );
-                                    System.out.println(rol + "列");
-                                    System.out.println("字段名" + excelColumnName);
-                                    System.out.println("字段值" + value);
+                                    System.out.println(row + " 行");
+                                    System.out.println(rol + " 列");
+                                    System.out.println("字段名:" + excelColumnName);
+                                    System.out.println("字段值:" + value);
                                 }
                             } else if (pair.getValue() == 0) {
                                 sb.append(" ").append(sqlColumnName).append(" = '").append(value).append("',");
@@ -318,7 +348,7 @@ public class InitUtils {
                         }
                     }
                 }
-                if(manipulateType == 0) {
+                if (manipulateType == 0) {
                     extraSql.insert(sb, quarter, year, geoTempL, geoTempR, vasId, districtType);
                 } else if (manipulateType == 1) {
                     sb.deleteCharAt(sb.length() - 1);
@@ -327,7 +357,7 @@ public class InitUtils {
             }
 
             sqlList.add(sb.toString());
-            if(dataType == 4 && manipulateType == 2) {
+            if (dataType == 4 && manipulateType == 2) {
                 sqlList.add(sb2.toString());
             }
         }
@@ -423,11 +453,13 @@ public class InitUtils {
         return sqlList;
     }
 
-    public static boolean isNumeric(String str){
+    public static boolean isNumeric(String str) {
         Pattern pattern = Pattern.compile("^[+-]?\\d+\\.?\\d*[Ee][+-]?\\d+$");
         Pattern pattern1 = Pattern.compile("^[+-]?(\\d+|\\d+\\.\\d+)$");
         Matcher isNum = pattern.matcher(str);
         Matcher isNum1 = pattern1.matcher(str);
-        return (isNum.matches() ||  isNum1.matches()) ;
+        return (isNum.matches() || isNum1.matches());
     }
+
+
 }

@@ -32,16 +32,16 @@ public class ExtraSqlMarket implements ExtraSql {
 
     @Override
     public String insertEnding(StringBuilder sb) {
-        return null;
+        return "";
     }
 
     @Override
     public String updateEnding(StringBuilder sb) {
-        return null;
+        return "";
     }
 
     @Override
     public String ending(StringBuilder sb) {
-        return null;
+        return "";
     }
 }

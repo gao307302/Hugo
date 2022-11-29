@@ -7,32 +7,43 @@ import org.example.utils.InitUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Scanner;
 
 public class CityInsert {
 
-    public static final HashMap<String, HashMap<String, Integer>> typeMap = new HashMap<>();
-    public static final List<String> toNumList = new ArrayList<>();
-    public static Pair<String, String> geoPair;
+    public HashMap<String, HashMap<String, Integer>> typeMap = new HashMap<>();
+    public List<String> toNumList = new ArrayList<>();
+    public Pair<String, String> geoPair;
 
     public static void main(String[] args) {
+
+        Scanner scan=new Scanner(System.in);
+
         CityInsert cityInsert = new CityInsert();
-//        String sourseFolder = args[0].toString();
-//        String sourceFile = args[1].toString();
-//        String exportFolder = args[2].toString();
-//        int manipulateType = Integer.parseInt(args[3].toString());
-//        int dataType = Integer.parseInt(args[4].toString());
-//        int districtType = Integer.parseInt(args[5].toString());
-//        int sheetNum = Integer.parseInt(args[6].toString());
+//        System.out.println("请输入 源文件夹：");
+//        System.out.println("请输入 源文件名：");
+//        System.out.println("请输入 输出文件夹：");
+//        System.out.println("请输入 操作类型（0 insert 1 update 2 delete）：");
+//        System.out.println("请输入 数据类型（0 market year 1 market quarter 2 traffic 3 economics 4 static 5 dynamic）：");
+//        System.out.println("请输入 行政区划类型（1 city 2 district）：");
+//        System.out.println("请输入 sheet number：");
+//        String sourseFolder = scan.nextLine();
+//        String sourceFile =scan.nextLine();
+//        String exportFolder = scan.nextLine();
+//        int manipulateType = Integer.parseInt(scan.nextLine());
+//        int dataType = Integer.parseInt(scan.nextLine());
+//        int districtType = Integer.parseInt(scan.nextLine());
+//        int sheetNum = Integer.parseInt(scan.nextLine());
         String sourseFolder = "C:\\Users\\hugo.gao\\OneDrive - JLL\\Documents\\data\\";
-        String sourceFile = "城市行政区界面数据220730.xlsx";
+        String sourceFile = "数据更新_仓库信息_1025.xlsx";
         String exportFolder = "C:\\Users\\hugo.gao\\OneDrive - JLL\\Documents\\data\\221122\\";
         // 0 insert 1 update 2 delete
-        int manipulateType = 0;
+        int manipulateType = 1;
         // 0 market year 1 market quarter 2 traffic 3 economics 4 static 5 dynamic
-        int dataType = 3;
+        int dataType = 4;
         // 1 city 2 district
         int districtType = 1;
-        int sheetNum = 1;
+        int sheetNum = 0;
 
         ExtraSql extraSql = null;
         InitUtils initUtils = new InitUtils();
@@ -69,7 +80,7 @@ public class CityInsert {
             case 2 :
                 inputs.tableName = "t_traffic_data";
                 cityInsert.initTraffic();
-                inputs.typeMap = typeMap;
+                inputs.typeMap = cityInsert.typeMap;
                 if(districtType == 2) {
                     inputs.sqlColumnName = sourseFolder +  "excelDatabaseMapping\\trafficDistrict.xlsx";
                     inputs.outputFile = exportFolder + "trafficDistrict";
@@ -98,15 +109,16 @@ public class CityInsert {
                 inputs.outputFile = exportFolder + "warehouseStatic";
                 extraSql = new ExtraSqlStatic();
                 cityInsert.initWarehouse();
-                inputs.typeMap = typeMap;
-                inputs.geoPair = geoPair;
-                inputs.toNumList = toNumList;
+                inputs.typeMap = cityInsert.typeMap;
+                inputs.geoPair = cityInsert.geoPair;
+                inputs.toNumList = cityInsert.toNumList;
                 break;
             case 5 :
                 inputs.tableName = "t_warehouse_dynamic";
                 inputs.sqlColumnName = sourseFolder +  "excelDatabaseMapping\\warehouseDynamic.xlsx";
                 inputs.outputFile = exportFolder + "warehouseDynamic";
                 extraSql = new ExtraSqlDynamic();
+                inputs.datePair = new Pair<>("Valuation_Year", "Valuation_Quarter");
                 break;
         }
         switch (manipulateType) {
@@ -125,7 +137,7 @@ public class CityInsert {
         }
         inputs.sheetNum = sheetNum;
         List<String> list = initUtils.getInitSqlList(inputs, extraSql, manipulateType, districtType, dataType);
-        System.out.println(list.size());
+        System.out.println("总条数：" + list.size());
         for (String s :
                 list) {
             InitUtils.saveAsFileWriter(s, inputs.outputFile);
