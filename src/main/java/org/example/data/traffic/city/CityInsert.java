@@ -20,30 +20,34 @@ public class CityInsert {
         Scanner scan=new Scanner(System.in);
 
         CityInsert cityInsert = new CityInsert();
-//        System.out.println("请输入 源文件夹：");
-//        System.out.println("请输入 源文件名：");
-//        System.out.println("请输入 输出文件夹：");
-//        System.out.println("请输入 操作类型（0 insert 1 update 2 delete）：");
-//        System.out.println("请输入 数据类型（0 market year 1 market quarter 2 traffic 3 economics 4 static 5 dynamic）：");
-//        System.out.println("请输入 行政区划类型（1 city 2 district）：");
-//        System.out.println("请输入 sheet number：");
-//        String sourseFolder = scan.nextLine();
-//        String sourceFile =scan.nextLine();
-//        String exportFolder = scan.nextLine();
-//        int manipulateType = Integer.parseInt(scan.nextLine());
-//        int dataType = Integer.parseInt(scan.nextLine());
-//        int districtType = Integer.parseInt(scan.nextLine());
-//        int sheetNum = Integer.parseInt(scan.nextLine());
-        String sourseFolder = "C:\\Users\\hugo.gao\\OneDrive - JLL\\Documents\\data\\";
-        String sourceFile = "数据更新_仓库信息_1025.xlsx";
-        String exportFolder = "C:\\Users\\hugo.gao\\OneDrive - JLL\\Documents\\data\\221122\\";
-        // 0 insert 1 update 2 delete
-        int manipulateType = 1;
-        // 0 market year 1 market quarter 2 traffic 3 economics 4 static 5 dynamic
-        int dataType = 4;
-        // 1 city 2 district
-        int districtType = 1;
-        int sheetNum = 0;
+        System.out.println("请输入 源文件夹：");
+        System.out.println("请输入 源文件名：");
+        System.out.println("请输入 输出文件夹：");
+        System.out.println("请输入 操作类型（0 insert 1 update 2 delete）：");
+        System.out.println("请输入 数据类型（0 market year 1 market quarter 2 traffic 3 economics 4 static 5 dynamic 6 tenants）：");
+        System.out.println("请输入 行政区划类型（1 city 2 district）：");
+        System.out.println("请输入 sheet number：");
+        String sourseFolder = scan.nextLine();
+        String sourceFile =scan.nextLine();
+        String exportFolder = scan.nextLine();
+        int manipulateType = Integer.parseInt(scan.nextLine());
+        int dataType = Integer.parseInt(scan.nextLine());
+        int districtType = Integer.parseInt(scan.nextLine());
+        int sheetNum = Integer.parseInt(scan.nextLine());
+//        String sourseFolder = "C:\\Users\\hugo.gao\\OneDrive - JLL\\Documents\\data\\";
+//        String sourceFile = "市场_Q4_230120.xlsx";
+//        String exportFolder = "C:\\Users\\hugo.gao\\OneDrive - JLL\\Documents\\data\\230130\\";
+//
+//        // 0 insert 1 update 2 delete
+//        int manipulateType = 0;
+//
+//        // 0 market year 1 market quarter 2 traffic 3 economics 4 static 5 dynamic
+//        int dataType = 6;
+//
+//        // 1 city 2 district
+//        int districtType = 2;
+//
+//        int sheetNum = 0;
 
         ExtraSql extraSql = null;
         InitUtils initUtils = new InitUtils();
@@ -55,6 +59,7 @@ public class CityInsert {
         switch (dataType) {
             case 0 :
                 inputs.tableName = "t_market_overview_year";
+                inputs.datePair = new Pair<>("年度", "");
                 if(districtType == 2) {
                     inputs.sqlColumnName = sourseFolder +  "excelDatabaseMapping\\marketDistrictYear.xlsx";
                     inputs.outputFile = exportFolder + "marketDistrictYear";
@@ -120,6 +125,12 @@ public class CityInsert {
                 extraSql = new ExtraSqlDynamic();
                 inputs.datePair = new Pair<>("Valuation_Year", "Valuation_Quarter");
                 break;
+            case 6 :
+                inputs.tableName = "t_tenants";
+                inputs.sqlColumnName = sourseFolder +  "excelDatabaseMapping\\tenants.xlsx";
+                inputs.outputFile = exportFolder + "tenants";
+                extraSql = new ExtraSqlTenants();
+                break;
         }
         switch (manipulateType) {
             case 0 :
@@ -170,6 +181,7 @@ public class CityInsert {
         tempMap.put("Land", 3);
         tempMap.put("Completed + CIP", 4);
         tempMap.put("Completed + Land", 5);
+        tempMap.put("renovating", 6);
         typeMap.put("建成状态", tempMap);
         HashMap<String, Integer> tempMap1 = new HashMap<>();
         tempMap1.put("Bonded", 1);

@@ -4,7 +4,7 @@ import java.util.Objects;
 
 public class ExtraSqlMarket implements ExtraSql {
     @Override
-    public void insert(StringBuilder sb, String quarter, String year, String geoTempL, String geoTempR, String vasId, int districtType) {
+    public void insert(StringBuilder sb, String quarter, String year, String geoTempL, String geoTempR, String vasId, int districtType, String developer, String fileLocation) {
         sb.append(" data_type = ").append(districtType).append(",");
         if(quarter == null) {
             sb.append(" data_date = '").append(year).append("';\n");
@@ -15,7 +15,7 @@ public class ExtraSqlMarket implements ExtraSql {
     }
 
     @Override
-    public void update(StringBuilder sb, String quarter, String year, String geoTempL, String geoTempR, String vasId, int districtType, String cityName, String districtName) {
+    public void update(StringBuilder sb, String quarter, String year, String geoTempL, String geoTempR, String vasId, int districtType, String cityName, String districtName, String fileLocation) {
         sb.append(" where date_year = '").append(year).append("'");
         if(quarter == null) {
             sb.append(" and data_date = '").append(year).append("'");

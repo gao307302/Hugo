@@ -235,6 +235,9 @@ public class InitUtils {
                     sb2.append(";\n");
                 }
             } else {
+                if(sheet.getRow(row).getCell(0) == null) {
+                    continue;
+                }
                 //年 季度
                 String quarter = null;
                 String year = null;
@@ -246,6 +249,7 @@ public class InitUtils {
                 String districtName = null;
                 // vas id
                 String vasId = null;
+                String developer = null;
                 for (int rol = 0; rol < maxRol; rol++) {
                     String excelColumnName = columnName.get(rol);
                     String value;
@@ -254,10 +258,24 @@ public class InitUtils {
                     if (sheet.getRow(row).getCell(rol) != null) {
                         if (geoPair != null) {
                             if (geoPair.getKey().equals(excelColumnName)) {
-                                geoTempR = String.valueOf(sheet.getRow(row).getCell(rol).getNumericCellValue());
+                                try {
+                                    geoTempR = String.valueOf(sheet.getRow(row).getCell(rol).getNumericCellValue());
+                                } catch (Exception e) {
+                                    System.out.println("坐标获取失败");
+                                    System.out.println(row + " 行");
+                                    System.out.println(rol + " 列");
+                                    System.out.println("字段名:" + excelColumnName);
+                                }
                                 continue;
                             } else if (geoPair.getValue().equals(excelColumnName)) {
-                                geoTempL = String.valueOf(sheet.getRow(row).getCell(rol).getNumericCellValue());
+                                try {
+                                    geoTempL = String.valueOf(sheet.getRow(row).getCell(rol).getNumericCellValue());
+                                } catch (Exception e) {
+                                    System.out.println("坐标获取失败");
+                                    System.out.println(row + " 行");
+                                    System.out.println(rol + " 列");
+                                    System.out.println("字段名:" + excelColumnName);
+                                }
                                 continue;
                             }
                         }
@@ -267,6 +285,9 @@ public class InitUtils {
                         if (excelColumnName.equals("臻量ID") || excelColumnName.equals("臻量ID(新版)")) {
                             vasId = sheet.getRow(row).getCell(rol).getStringCellValue();
                         }
+                        if (excelColumnName.equals("开发商")) {
+                            developer = sheet.getRow(row).getCell(rol).getStringCellValue();
+                        }
                         if (excelColumnName.equals("城市")) {
                             cityName = sheet.getRow(row).getCell(rol).getStringCellValue();
                         }
@@ -274,10 +295,26 @@ public class InitUtils {
                             districtName = sheet.getRow(row).getCell(rol).getStringCellValue();
                         }
                         if (datePair.getKey().equals(excelColumnName)) {
-                            year = numberFormat.format(sheet.getRow(row).getCell(rol).getNumericCellValue());
+                            try {
+                                year = numberFormat.format(sheet.getRow(row).getCell(rol).getNumericCellValue());
+                            }
+                            catch (Exception e) {
+                                System.out.println("年份获取失败");
+                                System.out.println(row + " 行");
+                                System.out.println(rol + " 列");
+                                System.out.println("字段名:" + excelColumnName);
+                            }
                         }
                         if (datePair.getValue().equals(excelColumnName)) {
-                            quarter = numberFormat.format(sheet.getRow(row).getCell(rol).getNumericCellValue());
+                            try {
+                                quarter = numberFormat.format(sheet.getRow(row).getCell(rol).getNumericCellValue());
+                            }
+                            catch (Exception e) {
+                                System.out.println("季度获取失败");
+                                System.out.println(row + " 行");
+                                System.out.println(rol + " 列");
+                                System.out.println("字段名:" + excelColumnName);
+                            }
                         }
 
 
@@ -349,10 +386,10 @@ public class InitUtils {
                     }
                 }
                 if (manipulateType == 0) {
-                    extraSql.insert(sb, quarter, year, geoTempL, geoTempR, vasId, districtType);
+                    extraSql.insert(sb, quarter, year, geoTempL, geoTempR, vasId, districtType, developer, filePos.fileLocation);
                 } else if (manipulateType == 1) {
                     sb.deleteCharAt(sb.length() - 1);
-                    extraSql.update(sb, quarter, year, geoTempL, geoTempR, vasId, districtType, cityName, districtName);
+                    extraSql.update(sb, quarter, year, geoTempL, geoTempR, vasId, districtType, cityName, districtName, filePos.fileLocation);
                 }
             }
 
