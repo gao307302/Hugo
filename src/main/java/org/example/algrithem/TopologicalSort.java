@@ -91,20 +91,36 @@ public class TopologicalSort {
         // 对子图进行拓扑排序
         TopologicalSort subSorter = new TopologicalSort(subGraph);
         List<List<Integer>> subResult = subSorter.sort();
-
+        // 直接修改的不需要计算
+        subResult.get(0).forEach(nodeList::remove);
         return subResult;
     }
 
     /**
      * 对已有的拓扑排序添加节点
-     * @param nodeList 节点编号
+     * @param nodes 节点编号
      * @param sortedResult 已有的拓扑排序
      * @return 不在List<List<Integer>> sortedResult中但是在Set<Integer> nodeList中的所有点
      */
-    public List<Integer> addNodesForSortedResult(Set<Integer> nodeList, List<List<Integer>> sortedResult) {
-        return nodeList.stream()
+    public static List<Integer> addNodesForSortedResult(Set<Integer> nodes, List<List<Integer>> sortedResult) {
+        return nodes.stream()
                 .filter(node -> sortedResult.stream().noneMatch(list -> list.contains(node)))
                 .collect(Collectors.toList());
+    }
+
+    // 计算 返回计算前后值不变的node
+    public static Set<Integer> calculate(List<Integer> nodes) {
+        return new HashSet<>();
+    }
+
+    // 返回计算前后值不变的node
+    public static Set<Integer> getUnchangedNodes(List<Integer> nodes) {
+        return new HashSet<>();
+    }
+
+    // 新的节点修改
+    public static Set<Integer> getChangedNodes() {
+        return new HashSet<>();
     }
 
     public static void main(String[] args) {
@@ -126,25 +142,45 @@ public class TopologicalSort {
         // [[1, 2, 3, 7], [4], [5], [6]]
         System.out.println(result);
 
+        // 修改的nodes(值发生改变)
         Set<Integer> changedNodes = new HashSet<>();
         // 修改了台账终止日
         changedNodes.add(CalcNode.RENT_ROLL_RENT_END_DATE.getCode());
+        // 需要计算的nodes
+        List<Integer> nodeCalculating;
+        // 新修改的nodes
+        Set<Integer> newChangedSet;
+        // 新修改的nodes中实际新增的nodes
+        List<Integer> addedNodes;
+        // 值未发生改变的nodes
+        Set<Integer> unchangedNodes;
         // 对节点台账终止日及其下游节点进行拓扑排序
         List<List<Integer>> subResult = sorter.sortFromNode(changedNodes);
-
-        List<Integer> nodeCalculating;
+        subResult.remove(0);
         while (subResult.size() > 0) {
             nodeCalculating = subResult.get(0);
-            //TODO 并行计算第一批
+            //并行计算 返回计算前后值不变的node
+            unchangedNodes = calculate(nodeCalculating);
+            unchangedNodes.forEach(changedNodes::remove);
+            nodeCalculating.forEach(changedNodes::remove);
             if (subResult.size() > 1) {
+                if(!unchangedNodes.isEmpty()) {
+                    // 如果有值没改变 要重新生成拓扑排序
+                    changedNodes.addAll(subResult.get(0));
+                    subResult = sorter.sortFromNode(changedNodes);
+                }
+                // 检查是否有新节点修改
+                newChangedSet = getChangedNodes();
+                if(!getChangedNodes().isEmpty()) {
+                    addedNodes = addNodesForSortedResult(newChangedSet, subResult);
+                    if(!addedNodes.isEmpty()) {
+                        changedNodes.addAll(addedNodes);
+                        subResult = sorter.sortFromNode(changedNodes);
+                    }
+                }
                 subResult.remove(0);
             }
         }
-
-
-        // 对已有的拓扑排序添加节点，发生在计算未完成但是有新节点变更
-
-
 
         // 对已有的拓扑排序删除节点，发生在修改前后值没变，理论上只会发生在sortedResult.get(0）中
         // [[1], [5], [6]]
