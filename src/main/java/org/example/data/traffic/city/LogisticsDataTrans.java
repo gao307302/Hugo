@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
-public class CityInsert {
+public class LogisticsDataTrans {
 
     public HashMap<String, HashMap<String, Integer>> typeMap = new HashMap<>();
     public List<String> toNumList = new ArrayList<>();
@@ -19,7 +19,7 @@ public class CityInsert {
 
         Scanner scan=new Scanner(System.in);
 
-        CityInsert cityInsert = new CityInsert();
+        LogisticsDataTrans logisticsDataTrans = new LogisticsDataTrans();
         System.out.println("请输入 源文件夹：");
         System.out.println("请输入 源文件名：");
         System.out.println("请输入 输出文件夹：");
@@ -84,8 +84,8 @@ public class CityInsert {
                 break;
             case 2 :
                 inputs.tableName = "t_traffic_data";
-                cityInsert.initTraffic();
-                inputs.typeMap = cityInsert.typeMap;
+                logisticsDataTrans.initTraffic();
+                inputs.typeMap = logisticsDataTrans.typeMap;
                 if(districtType == 2) {
                     inputs.sqlColumnName = sourseFolder +  "excelDatabaseMapping\\trafficDistrict.xlsx";
                     inputs.outputFile = exportFolder + "trafficDistrict";
@@ -113,10 +113,10 @@ public class CityInsert {
                 inputs.sqlColumnName = sourseFolder +  "excelDatabaseMapping\\warehouseStatic.xlsx";
                 inputs.outputFile = exportFolder + "warehouseStatic";
                 extraSql = new ExtraSqlStatic();
-                cityInsert.initWarehouse();
-                inputs.typeMap = cityInsert.typeMap;
-                inputs.geoPair = cityInsert.geoPair;
-                inputs.toNumList = cityInsert.toNumList;
+                logisticsDataTrans.initWarehouse();
+                inputs.typeMap = logisticsDataTrans.typeMap;
+                inputs.geoPair = logisticsDataTrans.geoPair;
+                inputs.toNumList = logisticsDataTrans.toNumList;
                 break;
             case 5 :
                 inputs.tableName = "t_warehouse_dynamic";
